@@ -1,10 +1,9 @@
-// app/budget/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../lib/firebase';  // Importiere Firestore und Auth
-import { useRouter } from 'next/navigation'; 
+import { db, auth } from '../lib/firebase';  
+import { useRouter } from 'next/navigation';
 
 export default function BudgetSettings() {
   const [monthlyBudget, setMonthlyBudget] = useState('');
@@ -19,14 +18,19 @@ export default function BudgetSettings() {
     try {
       const user = auth.currentUser;
       if (user) {
-        // Firestore-Dokument für den Benutzer erstellen
+        const monthlyBudgetValue = parseFloat(monthlyBudget);
+        const savingsGoalValue = parseFloat(savingsGoal);
+
+        // Firestore-Dokument für den Benutzer erstellen/aktualisieren
         await setDoc(doc(db, 'users', user.uid), {
-          monthlyBudget: parseFloat(monthlyBudget),
-          savingsGoal: parseFloat(savingsGoal),
-          createdAt: new Date(),
+          monthlyBudget: monthlyBudgetValue,
+          savingsGoal: savingsGoalValue,
+          remainingBudget: monthlyBudgetValue - savingsGoalValue,
+          lastResetMonth: new Date().getMonth(),
+          budgetfestgelegt: true,
         });
 
-        // Nach erfolgreicher Speicherung weiterleiten
+        // Nach erfolgreicher Speicherung zur Homepage weiterleiten
         router.push('/');
       }
     } catch (err) {
