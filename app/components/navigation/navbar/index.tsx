@@ -1,13 +1,14 @@
+// app/components/navigation/navbar/index.tsx
 'use client';
 
-// app/components/navigation/navbar/index.tsx
 import Link from 'next/link';
 import './navbar.css';
-import { useState } from 'react'; // Für das mobile Menü
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../../lib/firebase';
+import { signOut } from 'firebase/auth';
 
 export default function Navbar() {
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user] = useAuthState(auth); // Benutzerstatus überwachen
 
   return (
     <nav className="navbar">
@@ -18,7 +19,7 @@ export default function Navbar() {
         </div>
 
         {/* Links */}
-        <ul className={`navbar-links ${isMobileMenuOpen ? 'active' : ''}`}>
+        <ul className="navbar-links">
           <li>
             <Link href="/" className="navbar-link">Home</Link>
           </li>
@@ -33,15 +34,27 @@ export default function Navbar() {
           </li>
         </ul>
 
-        {/* Hamburger Menu Button für Mobile */}
-        <div
-          className="navbar-toggle"
-          onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          <span className="navbar-toggle-bar"></span>
-          <span className="navbar-toggle-bar"></span>
-          <span className="navbar-toggle-bar"></span>
-        </div>
+        {/* Auth Links */}
+        <ul className="navbar-links">
+          {user ? (
+            <>
+              <li className="navbar-link">
+                <span>Willkommen, {user.email}</span>
+              </li>
+              <li>
+                <button className="navbar-link" onClick={() => signOut(auth)}>
+                  Abmelden
+                </button>
+              </li>
+            </>
+          ) : (
+            <li>
+              <Link href="/signup" className="navbar-link">
+                Anmelden / Registrieren
+              </Link>
+            </li>
+          )}
+        </ul>
       </div>
     </nav>
   );
