@@ -1,4 +1,3 @@
-// app/components/navigation/navbar/index.tsx
 'use client';
 
 import Link from 'next/link';
@@ -23,15 +22,14 @@ export default function Navbar() {
           <li>
             <Link href="/" className="navbar-link">Home</Link>
           </li>
-          <li>
-            <Link href="/about" className="navbar-link">About</Link>
-          </li>
+          
           <li>
             <Link href="/budget" className="navbar-link">Budget</Link>
           </li>
           <li>
-            <Link href="/contact" className="navbar-link">Contact</Link>
+            <Link href="/expenses" className="navbar-link">Ausgaben</Link> {/* Neuer Ausgaben-Link */}
           </li>
+          
         </ul>
 
         {/* Auth Links */}
