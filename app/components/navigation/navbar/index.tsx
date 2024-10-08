@@ -6,15 +6,15 @@ import './navbar.css';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../lib/firebase';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation'; // Router importieren
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const [user] = useAuthState(auth);
-  const router = useRouter(); // Router initialisieren
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut(auth);
-    router.push('/signup'); // Nach dem Abmelden zur /signup Seite leiten
+    router.push('/signup');
   };
 
   return (
@@ -32,7 +32,10 @@ export default function Navbar() {
             <Link href="/budget" className="navbar-link">Budget</Link>
           </li>
           <li>
-            <Link href="/expenses" className="navbar-link">Ausgaben</Link> {/* Neuer Ausgaben-Link */}
+            <Link href="/expenses" className="navbar-link">Ausgaben</Link>
+          </li>
+          <li>
+            <Link href="/savings" className="navbar-link">Sparen</Link> {/* Neuer Link zur Spar-Seite */}
           </li>
         </ul>
 
@@ -50,8 +53,8 @@ export default function Navbar() {
             </>
           ) : (
             <li>
-              <Link href="/signup" className="navbar-link">
-                Anmelden / Registrieren
+              <Link href="/login" className="navbar-link">
+                Einloggen
               </Link>
             </li>
           )}
