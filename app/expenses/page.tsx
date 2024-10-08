@@ -6,6 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Chart } from 'chart.js/auto';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/solid'; // Importiere die Icons
 
 // Typen definieren
 interface Expense {
@@ -27,7 +28,9 @@ interface UserSettings {
 export default function ExpensesPage() {
   const [user, loading] = useAuthState(auth);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date()); // Aktueller Monat
   const [chartData, setChartData] = useState<any>(null);
+  const [chartInstance, setChartInstance] = useState<Chart | null>(null); // Zustand für die Chart-Instanz
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -39,7 +42,7 @@ export default function ExpensesPage() {
         if (docSnap.exists()) {
           const userData = docSnap.data() as UserSettings;
           setUserSettings(userData);
-          generateChartData(userData);
+          generateChartData(userData, currentMonth);
         }
       }
     };
@@ -47,36 +50,35 @@ export default function ExpensesPage() {
     if (!loading && user) {
       loadUserSettings();
     }
-  }, [user, loading]);
+  }, [user, loading, currentMonth]);
 
   // Funktion zum Generieren der Daten für den Graphen
-  const generateChartData = (userData: UserSettings) => {
-    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  const generateChartData = (userData: UserSettings, month: Date) => {
+    const year = month.getFullYear();
+    const monthIndex = month.getMonth();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
     const labels = Array.from({ length: daysInMonth }, (_, i) => `Tag ${i + 1}`);
-    
-    const currentDay = new Date().getDate();
-    const availableBudget = userData.monthlyBudget - userData.savingsGoal;
-    
+
+    const availableBudget = userData.monthlyBudget - userData.savingsGoal; // Berechnung des verfügbaren Budgets
     let budgetLeft = availableBudget;
+
     const data = labels.map((_, day) => {
-      if (day < currentDay) {
-        // An jedem Tag prüfen, ob Ausgaben das Budget mindern
-        const dailyExpenses = userData.expenses.filter(
-          (expense) => new Date(expense.date).getDate() === day + 1
-        );
-        dailyExpenses.forEach((expense) => {
-          budgetLeft -= expense.amount; // Budget reduzieren
-        });
-      }
+      // An jedem Tag prüfen, ob Ausgaben das Budget mindern
+      const dailyExpenses = userData.expenses.filter(
+        (expense) => new Date(expense.date).getMonth() === monthIndex && new Date(expense.date).getFullYear() === year && new Date(expense.date).getDate() === day + 1
+      );
+      dailyExpenses.forEach((expense) => {
+        budgetLeft -= expense.amount; // Budget reduzieren
+      });
       return budgetLeft; // Das verbleibende Budget zurückgeben
     });
 
     setChartData({
-      labels: labels.slice(0, currentDay), // Nur bis zum aktuellen Tag anzeigen
+      labels: labels,
       datasets: [
         {
           label: 'Verfügbares Budget',
-          data: data.slice(0, currentDay), // Daten nur bis zum aktuellen Tag
+          data: data,
           fill: false,
           borderColor: 'rgb(75, 192, 192)',
           tension: 0.1,
@@ -88,8 +90,14 @@ export default function ExpensesPage() {
   useEffect(() => {
     if (chartData) {
       const ctx = document.getElementById('budgetChart') as HTMLCanvasElement | null;
+
+      // Zerstöre die vorherige Chart-Instanz, falls vorhanden
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
       if (ctx) {
-        new Chart(ctx, {
+        const newChartInstance = new Chart(ctx, {
           type: 'line',
           data: chartData,
           options: {
@@ -111,15 +119,35 @@ export default function ExpensesPage() {
             },
           },
         });
+
+        setChartInstance(newChartInstance); // Speichere die neue Chart-Instanz
       }
     }
   }, [chartData]);
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  };
 
   if (loading) return <p>Laden...</p>;
 
   return (
     <div className="container mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
       <h1 className="text-2xl font-semibold text-center dark:text-white mb-6">Monatliche Ausgaben</h1>
+
+      <div className="flex justify-between mb-4">
+        <button onClick={handlePrevMonth} className="p-2 bg-gray-200 rounded hover:bg-gray-300">
+          <ChevronLeftIcon className="h-5 w-5 text-gray-700" />
+        </button>
+        <h2 className="text-lg font-semibold dark:text-white">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+        <button onClick={handleNextMonth} className="p-2 bg-gray-200 rounded hover:bg-gray-300">
+          <ChevronRightIcon className="h-5 w-5 text-gray-700" />
+        </button>
+      </div>
 
       {/* Tabelle der Ausgaben */}
       <table className="min-w-full table-auto bg-white dark:bg-gray-800">
@@ -132,13 +160,15 @@ export default function ExpensesPage() {
           </tr>
         </thead>
         <tbody>
-          {userSettings?.expenses.map((expense, index) => (
-            <tr key={index} className="bg-gray-100 dark:bg-gray-700">
-              <td className="border px-4 py-2">{new Date(expense.date).toLocaleDateString()}</td>
-              <td className="border px-4 py-2">{expense.amount}</td>
-              <td className="border px-4 py-2">{expense.name}</td>
-              <td className="border px-4 py-2">{expense.note}</td>
-            </tr>
+          {userSettings?.expenses
+            .filter(expense => new Date(expense.date).getMonth() === currentMonth.getMonth() && new Date(expense.date).getFullYear() === currentMonth.getFullYear())
+            .map((expense, index) => (
+              <tr key={index} className="bg-gray-100 dark:bg-gray-700">
+                <td className="border px-4 py-2">{new Date(expense.date).toLocaleDateString()}</td>
+                <td className="border px-4 py-2">{expense.amount}</td>
+                <td className="border px-4 py-2">{expense.name}</td>
+                <td className="border px-4 py-2">{expense.note}</td>
+              </tr>
           ))}
         </tbody>
       </table>
