@@ -7,12 +7,26 @@ import { auth, db } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Chart } from 'chart.js/auto';
 
+// Typen definieren
+interface Expense {
+  amount: number;
+  name: string;
+  note: string;
+  date: string; // Datum als ISO-String
+}
+
+interface UserSettings {
+  remainingBudget: number;
+  monthlyBudget: number;
+  expenses: Expense[];
+  savingsGoal: number;
+  lastResetMonth: number;
+  budgetfestgelegt: boolean;
+}
+
 export default function ExpensesPage() {
   const [user, loading] = useAuthState(auth);
-  const [userSettings, setUserSettings] = useState<any | null>(null);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [remainingBudget, setRemainingBudget] = useState<number | null>(null);
-  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [chartData, setChartData] = useState<any>(null);
 
   useEffect(() => {
@@ -23,11 +37,8 @@ export default function ExpensesPage() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const userData = docSnap.data();
+          const userData = docSnap.data() as UserSettings;
           setUserSettings(userData);
-          setExpenses(userData.expenses || []);
-          setRemainingBudget(userData.remainingBudget);
-          setMonthlyBudget(userData.monthlyBudget);
           generateChartData(userData);
         }
       }
@@ -39,29 +50,33 @@ export default function ExpensesPage() {
   }, [user, loading]);
 
   // Funktion zum Generieren der Daten für den Graphen
-  const generateChartData = (userData: any) => {
+  const generateChartData = (userData: UserSettings) => {
     const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-    const dailyBudget = userData.monthlyBudget / daysInMonth;
     const labels = Array.from({ length: daysInMonth }, (_, i) => `Tag ${i + 1}`);
-
-    let budgetLeft = userData.monthlyBudget;
+    
+    const currentDay = new Date().getDate();
+    const availableBudget = userData.monthlyBudget - userData.savingsGoal;
+    
+    let budgetLeft = availableBudget;
     const data = labels.map((_, day) => {
-      // An jedem Tag wird geprüft, ob Ausgaben das Budget mindern
-      const dailyExpenses = userData.expenses.filter(
-        (expense: any) => new Date(expense.date).getDate() === day + 1
-      );
-      dailyExpenses.forEach((expense: any) => {
-        budgetLeft -= expense.amount;
-      });
-      return budgetLeft;
+      if (day < currentDay) {
+        // An jedem Tag prüfen, ob Ausgaben das Budget mindern
+        const dailyExpenses = userData.expenses.filter(
+          (expense) => new Date(expense.date).getDate() === day + 1
+        );
+        dailyExpenses.forEach((expense) => {
+          budgetLeft -= expense.amount; // Budget reduzieren
+        });
+      }
+      return budgetLeft; // Das verbleibende Budget zurückgeben
     });
 
     setChartData({
-      labels: labels,
+      labels: labels.slice(0, currentDay), // Nur bis zum aktuellen Tag anzeigen
       datasets: [
         {
           label: 'Verfügbares Budget',
-          data: data,
+          data: data.slice(0, currentDay), // Daten nur bis zum aktuellen Tag
           fill: false,
           borderColor: 'rgb(75, 192, 192)',
           tension: 0.1,
@@ -72,11 +87,31 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     if (chartData) {
-      const ctx = document.getElementById('budgetChart') as HTMLCanvasElement;
-      new Chart(ctx, {
-        type: 'line',
-        data: chartData,
-      });
+      const ctx = document.getElementById('budgetChart') as HTMLCanvasElement | null;
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'line',
+          data: chartData,
+          options: {
+            scales: {
+              y: {
+                min: 0, // Setze die Y-Achse auf 0 Euro
+              },
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const day = context.label;
+                    const amount = context.raw; // Verfügbares Budget an diesem Tag
+                    return [`${day}: ${amount} €`]; // Tooltip-Inhalt anpassen
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
     }
   }, [chartData]);
 
@@ -97,7 +132,7 @@ export default function ExpensesPage() {
           </tr>
         </thead>
         <tbody>
-          {expenses.map((expense, index) => (
+          {userSettings?.expenses.map((expense, index) => (
             <tr key={index} className="bg-gray-100 dark:bg-gray-700">
               <td className="border px-4 py-2">{new Date(expense.date).toLocaleDateString()}</td>
               <td className="border px-4 py-2">{expense.amount}</td>

@@ -7,13 +7,20 @@ import { auth, db } from './lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
 
+interface Expense {
+  amount: number;
+  name: string;
+  note: string;
+  date: string; // Datum als ISO-String
+}
+
 interface UserSettings {
   remainingBudget: number;
   monthlyBudget: number;
   savingsGoal: number;
   lastResetMonth: number;
   budgetfestgelegt: boolean;
-  expenses: { amount: number; name: string; note: string }[]; // Liste der Ausgaben
+  expenses: Expense[]; // Liste der Ausgaben
 }
 
 export default function HomePage() {
@@ -94,6 +101,7 @@ export default function HomePage() {
           amount: expenseAmount,
           name: newExpense.name,
           note: newExpense.note || '',
+          date: new Date().toISOString(), // Datum der Ausgabe speichern
         }),
       });
 
@@ -107,6 +115,7 @@ export default function HomePage() {
             amount: expenseAmount,
             name: newExpense.name,
             note: newExpense.note || '',
+            date: new Date().toISOString(), // Datum lokal speichern
           },
         ],
       }));
