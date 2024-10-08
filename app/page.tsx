@@ -33,7 +33,6 @@ export default function HomePage() {
   const [newExpense, setNewExpense] = useState({ amount: '', name: '', note: '' });
   const router = useRouter();
 
-  // Funktion, um die Benutzereinstellungen aus Firestore zu laden
   const loadUserSettings = async () => {
     const user = auth.currentUser;
     if (user) {
@@ -42,15 +41,12 @@ export default function HomePage() {
 
       if (docSnap.exists()) {
         const userData = docSnap.data() as UserSettings;
-        console.log('Firestore-Daten geladen:', userData);
 
-        // Prüfen, ob die Ausgabenliste vorhanden ist, wenn nicht, initialisieren wir sie als leeres Array
         if (!userData.expenses) {
           userData.expenses = [];
         }
 
         if (!userData.budgetfestgelegt) {
-          console.log('Budget nicht festgelegt, zeige Popup an.');
           setShowPopup(true);
         } else {
           const availableBudget = userData.monthlyBudget - userData.savingsGoal;
@@ -63,15 +59,13 @@ export default function HomePage() {
           setDaysLeft(daysInMonth - currentDay);
         }
       } else {
-        // Wenn kein Dokument existiert, erstelle einen leeren Eintrag für den Benutzer
-        console.log('Kein Benutzerdokument vorhanden, erstelle neues.');
         await setDoc(docRef, {
           budgetfestgelegt: false,
           monthlyBudget: null,
           savingsGoal: null,
           remainingBudget: null,
           lastResetMonth: null,
-          expenses: [], // Leere Ausgabenliste
+          expenses: [],
         });
         setShowPopup(true);
       }
@@ -84,7 +78,6 @@ export default function HomePage() {
     }
   }, [user, loading]);
 
-  // Funktion zum Hinzufügen einer neuen Ausgabe
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = auth.currentUser;
@@ -93,7 +86,6 @@ export default function HomePage() {
       const expenseAmount = parseFloat(newExpense.amount);
       const updatedRemainingBudget = remainingBudget! - expenseAmount;
 
-      // Update Firestore mit der neuen Ausgabe und dem neuen verbleibenden Budget
       const docRef = doc(db, 'users', user.uid);
       await updateDoc(docRef, {
         remainingBudget: updatedRemainingBudget,
@@ -101,12 +93,14 @@ export default function HomePage() {
           amount: expenseAmount,
           name: newExpense.name,
           note: newExpense.note || '',
-          date: new Date().toISOString(), // Datum der Ausgabe speichern
+          date: new Date().toISOString(),
         }),
       });
 
-      // Update den lokalen Zustand
+      const availableBudget = userSettings!.monthlyBudget - userSettings!.savingsGoal;
       setRemainingBudget(updatedRemainingBudget);
+      setProgress((updatedRemainingBudget / availableBudget) * 100);
+
       setUserSettings((prev) => ({
         ...prev!,
         expenses: [
@@ -115,12 +109,11 @@ export default function HomePage() {
             amount: expenseAmount,
             name: newExpense.name,
             note: newExpense.note || '',
-            date: new Date().toISOString(), // Datum lokal speichern
+            date: new Date().toISOString(),
           },
         ],
       }));
 
-      // Leere das Eingabefeld nach dem Hinzufügen
       setNewExpense({ amount: '', name: '', note: '' });
     }
   };
@@ -166,7 +159,6 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Neue Ausgabe hinzufügen */}
           <form onSubmit={handleAddExpense} className="mb-6">
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -211,7 +203,6 @@ export default function HomePage() {
             </button>
           </form>
 
-          {/* Liste der Ausgaben */}
           <h2 className="text-xl font-semibold text-center dark:text-white mb-4">Ausgaben</h2>
           <ul className="space-y-4">
             {userSettings?.expenses && userSettings.expenses.length > 0 ? (

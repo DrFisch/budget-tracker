@@ -1,12 +1,12 @@
-// app/signup/page.tsx
+// app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useRouter } from 'next/navigation';  // Router importieren
 
-export default function SignupPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,8 +17,8 @@ export default function SignupPage() {
     setError('');
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/');  // Nach erfolgreicher Registrierung zur Homepage leiten
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/');  // Nach erfolgreichem Login zur Homepage leiten
     } catch (err) {
       setError((err as Error).message);
     }
@@ -28,7 +28,7 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-start justify-center bg-gray-900 dark:bg-gray-900 pt-20">
       <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg">
         <h1 className="text-2xl font-semibold mb-6 text-center text-white">
-          Registrieren
+          Einloggen
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -60,17 +60,17 @@ export default function SignupPage() {
             type="submit"
             className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
           >
-            Registrieren
+            Einloggen
           </button>
         </form>
         <p className="mt-4 text-center text-gray-300">
-          Bereits ein Konto?{' '}
+          Noch kein Konto?{' '}
           <button
             type="button"
             className="text-blue-400 hover:underline"
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/signup')}
           >
-            Hier einloggen
+            Hier registrieren
           </button>
         </p>
       </div>
