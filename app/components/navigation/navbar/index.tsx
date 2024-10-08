@@ -21,7 +21,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-logo">
-          <Link href="/">MyBudget</Link>
+          <Link href="/">BudgetKing</Link>
         </div>
 
         <ul className="navbar-links">
@@ -35,7 +35,10 @@ export default function Navbar() {
             <Link href="/expenses" className="navbar-link">Ausgaben</Link>
           </li>
           <li>
-            <Link href="/savings" className="navbar-link">Sparen</Link> {/* Neuer Link zur Spar-Seite */}
+            <Link href="/savings" className="navbar-link">Sparen</Link>
+          </li>
+          <li>
+            <Link href="/contact" className="navbar-link">Impressum</Link> {/* Link zu Impressum */}
           </li>
         </ul>
 
@@ -43,7 +46,7 @@ export default function Navbar() {
           {user ? (
             <>
               <li className="navbar-link">
-                <span>Willkommen, {user.email}</span>
+                <span>{user.email}</span>
               </li>
               <li>
                 <button className="navbar-link" onClick={handleSignOut}>
@@ -53,8 +56,8 @@ export default function Navbar() {
             </>
           ) : (
             <li>
-              <Link href="/login" className="navbar-link">
-                Einloggen
+              <Link href="/signup" className="navbar-link">
+                Anmelden / Registrieren
               </Link>
             </li>
           )}
