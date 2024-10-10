@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Navbar />
-        <main>{children}</main>
+        <main className="flex-grow pb-24 pt-0">{children}</main>
         <Footer />
       </body>
     </html>
