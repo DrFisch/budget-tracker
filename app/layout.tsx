@@ -6,8 +6,8 @@ import Navbar from './components/navigation/navbar';
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'BudgetKing',
-  description: 'Manage deine Ausgaben',
+  title: 'SigmaSavings',
+  description: 'Manage deine Moneten wie ein Sigma Gigachad',
 }
 
 export default function RootLayout({

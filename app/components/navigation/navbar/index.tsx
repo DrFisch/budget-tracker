@@ -20,9 +20,8 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <div className="navbar-logo">
-          <Link href="/">BudgetKing</Link>
-        </div>
+      <img src="/SigmaSavings.png"  alt="Banner" className="navbar-banner" />
+        
 
         <ul className="navbar-links">
           <li>
