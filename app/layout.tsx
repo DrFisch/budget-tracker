@@ -1,7 +1,9 @@
+
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Navbar from './components/navigation/navbar';
+import { checkRecurringExpenses } from './hooks/useRecurringExpenses';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,6 +17,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  checkRecurringExpenses();
+
   return (
     <html lang="en">
       <body>

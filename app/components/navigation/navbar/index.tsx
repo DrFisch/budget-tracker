@@ -28,13 +28,17 @@ export default function Navbar() {
             <Link href="/" className="navbar-link">Home</Link>
           </li>
           <li>
-            <Link href="/budget" className="navbar-link">Budget</Link>
+            <Link href="/manage-expenses" className='navbar-link'>Ausgaben</Link>
           </li>
+          
           <li>
-            <Link href="/expenses" className="navbar-link">Ausgaben</Link>
+            <Link href="/expenses" className="navbar-link">Analyse</Link>
           </li>
           <li>
             <Link href="/savings" className="navbar-link">Sparen</Link>
+          </li>
+          <li>
+            <Link href="/budget" className="navbar-link">Budget</Link>
           </li>
           <li>
             <Link href="/contact" className="navbar-link">Impressum</Link> {/* Link zu Impressum */}
