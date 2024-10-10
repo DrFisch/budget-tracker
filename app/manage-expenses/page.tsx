@@ -1,6 +1,7 @@
+// /app/manage-expenses/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { doc, updateDoc, getDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -34,8 +35,26 @@ export default function ManageExpensesPage() {
     dueDay: '',
     alreadyChargedThisMonth: false,
   });
-  const [error, setError] = useState<string | null>(null); // Fehlermeldung
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const loadUserSettings = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      const docRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data() as UserSettings;
+        setUserSettings(userData);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadUserSettings();
+  }, [user]);
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +68,6 @@ export default function ManageExpensesPage() {
       if (docSnap.exists()) {
         const userData = docSnap.data() as UserSettings;
 
-        // Aktuelles remainingBudget berechnen
         const updatedRemainingBudget = userData.remainingBudget - expenseAmount;
 
         // Update remainingBudget und expenses in der Datenbank
@@ -63,20 +81,34 @@ export default function ManageExpensesPage() {
           }),
         });
 
-        // Optional: Reset des Formulars
+        // Reset des Formulars und Aktualisierung der Daten
         setNewExpense({ amount: '', name: '', note: '', category: '', isRecurring: false, frequency: '', dueDay: '', alreadyChargedThisMonth: false });
+        loadUserSettings(); // Daten neu laden
         setError(null);
-
-        // Optional: Weiterleitung zur Homepage oder Aktualisierung
-        router.push('/');
       }
     } else {
       setError('Bitte alle Felder ausfüllen');
     }
   };
 
+  // Funktion, um das Datum im benutzerfreundlichen Format anzuzeigen
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  // Filtere die Ausgaben für den aktuellen Monat
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  const currentMonthExpenses = userSettings?.expenses.filter(
+    (expense) =>
+      new Date(expense.date).getMonth() === currentMonth &&
+      new Date(expense.date).getFullYear() === currentYear
+  );
+
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
+    <div className="container mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg dark:bg-gray-800">
       <h1 className="text-2xl font-semibold text-center dark:text-white mb-6">Ausgaben festlegen</h1>
 
       <form onSubmit={handleAddExpense} className="space-y-4">
@@ -112,75 +144,6 @@ export default function ManageExpensesPage() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategorie</label>
-          <select
-            value={newExpense.category}
-            onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-            required
-            className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          >
-            <option value="">Kategorie wählen</option>
-            <option value="Lebensmittel">Lebensmittel</option>
-            <option value="Transport">Transport</option>
-            <option value="Unterhaltung">Unterhaltung</option>
-            <option value="Miete">Miete</option>
-            <option value="Sonstiges">Sonstiges</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Wiederkehrende Ausgabe</label>
-          <input
-            type="checkbox"
-            checked={newExpense.isRecurring}
-            onChange={(e) => setNewExpense({ ...newExpense, isRecurring: e.target.checked })}
-            className="w-4 h-4 text-blue-600"
-          />
-        </div>
-
-        {newExpense.isRecurring && (
-          <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Häufigkeit</label>
-              <select
-                value={newExpense.frequency}
-                onChange={(e) => setNewExpense({ ...newExpense, frequency: e.target.value })}
-                required
-                className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              >
-                <option value="">Häufigkeit wählen</option>
-                <option value="täglich">Täglich</option>
-                <option value="wöchentlich">Wöchentlich</option>
-                <option value="monatlich">Monatlich</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fälligkeitstag des Monats (1-27)</label>
-              <input
-                type="number"
-                value={newExpense.dueDay}
-                onChange={(e) => setNewExpense({ ...newExpense, dueDay: e.target.value })}
-                min="1"
-                max="27"
-                required
-                className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Diese Ausgabe wurde diesen Monat bereits abgebucht</label>
-              <input
-                type="checkbox"
-                checked={newExpense.alreadyChargedThisMonth}
-                onChange={(e) => setNewExpense({ ...newExpense, alreadyChargedThisMonth: e.target.checked })}
-                className="w-4 h-4 text-blue-600"
-              />
-            </div>
-          </>
-        )}
-
         {error && <p className="text-red-500">{error}</p>}
 
         <button
@@ -190,6 +153,36 @@ export default function ManageExpensesPage() {
           Ausgabe hinzufügen
         </button>
       </form>
+
+      {/* Tabelle der aktuellen Monatsausgaben */}
+      <h2 className="text-xl font-semibold text-center dark:text-white mt-6 mb-4">Ausgaben im aktuellen Monat</h2>
+
+      {currentMonthExpenses && currentMonthExpenses.length > 0 ? (
+        <div className="overflow-x-auto"> {/* Scrollbare Tabelle */}
+          <table className="min-w-full table-auto bg-white dark:bg-gray-800 rounded-lg">
+            <thead>
+              <tr className="text-left bg-gray-200 dark:bg-gray-700">
+                <th className="px-4 py-2">Datum</th>
+                <th className="px-4 py-2">Betrag (€)</th>
+                <th className="px-4 py-2">Beschreibung</th>
+                <th className="px-4 py-2">Anmerkung</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentMonthExpenses.map((expense, index) => (
+                <tr key={index} className={`bg-gray-100 dark:bg-gray-700 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white dark:bg-gray-800'}`}>
+                  <td className="border px-4 py-2">{formatDate(expense.date)}</td>
+                  <td className="border px-4 py-2">{expense.amount} €</td>
+                  <td className="border px-4 py-2">{expense.name}</td>
+                  <td className="border px-4 py-2">{expense.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-center text-lg dark:text-gray-300 mt-4">Keine Ausgaben für diesen Monat vorhanden</p>
+      )}
     </div>
   );
 }

@@ -42,7 +42,11 @@ export default function ExpensesPage() {
         if (docSnap.exists()) {
           const userData = docSnap.data() as UserSettings;
           setUserSettings(userData);
-          generateChartData(userData, currentMonth);
+
+          // Prüfe, ob es Ausgaben gibt, bevor Daten für den Graph generiert werden
+          if (userData.expenses && userData.expenses.length > 0) {
+            generateChartData(userData, currentMonth);
+          }
         }
       }
     };
@@ -143,41 +147,57 @@ export default function ExpensesPage() {
         <button onClick={handlePrevMonth} className="p-2 bg-gray-200 rounded hover:bg-gray-300">
           <ChevronLeftIcon className="h-5 w-5 text-gray-700" />
         </button>
-        <h2 className="text-lg font-semibold dark:text-white">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+        <h2 className="text-lg font-semibold dark:text-white">
+          {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        </h2>
         <button onClick={handleNextMonth} className="p-2 bg-gray-200 rounded hover:bg-gray-300">
           <ChevronRightIcon className="h-5 w-5 text-gray-700" />
         </button>
       </div>
 
       {/* Tabelle der Ausgaben */}
-      <table className="min-w-full table-auto bg-white dark:bg-gray-800">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Datum</th>
-            <th className="px-4 py-2">Betrag (€)</th>
-            <th className="px-4 py-2">Beschreibung</th>
-            <th className="px-4 py-2">Anmerkung</th>
-          </tr>
-        </thead>
-        <tbody>
-          {userSettings?.expenses
-            .filter(expense => new Date(expense.date).getMonth() === currentMonth.getMonth() && new Date(expense.date).getFullYear() === currentMonth.getFullYear())
-            .map((expense, index) => (
-              <tr key={index} className="bg-gray-100 dark:bg-gray-700">
-                <td className="border px-4 py-2">{new Date(expense.date).toLocaleDateString()}</td>
-                <td className="border px-4 py-2">{expense.amount}</td>
-                <td className="border px-4 py-2">{expense.name}</td>
-                <td className="border px-4 py-2">{expense.note}</td>
-              </tr>
-          ))}
-        </tbody>
-      </table>
+      {userSettings?.expenses && userSettings.expenses.length > 0 ? (
+        <table className="min-w-full table-auto bg-white dark:bg-gray-800">
+          <thead>
+            <tr>
+              <th className="px-4 py-2">Datum</th>
+              <th className="px-4 py-2">Betrag (€)</th>
+              <th className="px-4 py-2">Beschreibung</th>
+              <th className="px-4 py-2">Anmerkung</th>
+            </tr>
+          </thead>
+          <tbody>
+            {userSettings.expenses
+              .filter(
+                (expense) =>
+                  new Date(expense.date).getMonth() === currentMonth.getMonth() &&
+                  new Date(expense.date).getFullYear() === currentMonth.getFullYear()
+              )
+              .map((expense, index) => (
+                <tr key={index} className="bg-gray-100 dark:bg-gray-700">
+                  <td className="border px-4 py-2">
+                    {new Date(expense.date).toLocaleDateString()}
+                  </td>
+                  <td className="border px-4 py-2">{expense.amount}</td>
+                  <td className="border px-4 py-2">{expense.name}</td>
+                  <td className="border px-4 py-2">{expense.note}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="text-center text-lg dark:text-gray-300">Keine Ausgaben vorhanden</p>
+      )}
 
       {/* Graph des Budgets */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-center dark:text-white mb-4">Verlauf des Budgets</h2>
-        <canvas id="budgetChart"></canvas>
-      </div>
+      {chartData ? (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-center dark:text-white mb-4">Verlauf des Budgets</h2>
+          <canvas id="budgetChart"></canvas>
+        </div>
+      ) : (
+        <p className="text-center text-lg dark:text-gray-300">Keine Daten für den Graph verfügbar</p>
+      )}
     </div>
   );
 }
