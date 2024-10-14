@@ -6,14 +6,14 @@ import './navbar2.css';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../lib/firebase';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 const navigation = [
-  { name: 'Home', href: '/', current: true },
-  { name: 'Ausgaben', href: '/manage-expenses', current: false },
-  { name: 'Analyse', href: '/expenses', current: false },
-  { name: 'Sparen', href: '/savings', current: false },
+  { name: 'Home', href: '/' },
+  { name: 'Ausgaben', href: '/manage-expenses' },
+  { name: 'Analyse', href: '/expenses' },
+  { name: 'Sparen', href: '/savings' },
   
 ];
 
@@ -24,6 +24,7 @@ function classNames(...classes: string[]) {
 export default function Example() {
   const [user] = useAuthState(auth);
   const router = useRouter();
+  const pathname = usePathname(); // Erhalte den aktuellen Pfad
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -44,17 +45,17 @@ export default function Example() {
             <div className="hidden sm:block">
               <div className="flex space-x-4">
                 {navigation.map((item) => (
-                  <a
+                  <Link
                     key={item.name}
                     href={item.href}
-                    aria-current={item.current ? 'page' : undefined}
+                    aria-current={pathname === item.href ? 'page' : undefined} // Dynamische current Logik
                     className={classNames(
-                      item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                      pathname === item.href ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
                       'rounded-md px-3 py-2 text-sm font-medium'
                     )}
                   >
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -120,9 +121,9 @@ export default function Example() {
               key={item.name}
               as="a"
               href={item.href}
-              aria-current={item.current ? 'page' : undefined}
+              aria-current={pathname === item.href ? 'page' : undefined} // Dynamische current Logik für mobile Ansicht
               className={classNames(
-                item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                pathname === item.href ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
                 'block rounded-md px-3 py-2 text-base font-medium'
               )}
             >
