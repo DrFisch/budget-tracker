@@ -14,7 +14,7 @@ const navigation = [
   { name: 'Ausgaben', href: '/manage-expenses', current: false },
   { name: 'Analyse', href: '/expenses', current: false },
   { name: 'Sparen', href: '/savings', current: false },
-  { name: 'Budget', href: '/budget', current: false },
+  
 ];
 
 function classNames(...classes: string[]) {
@@ -82,7 +82,7 @@ export default function Example() {
                       <span className="sr-only">Open user menu</span>
                       <img
                         alt=""
-                        src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                        src="/defaultuser.jpg"
                         className="h-8 w-8 rounded-full"
                       />
                     </MenuButton>
@@ -91,7 +91,7 @@ export default function Example() {
                     className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5"
                   >
                     <MenuItem>
-                      <a href="#" className="block px-4 py-2 text-sm text-gray-700">Dein Profil</a>
+                      <a href="/budget" className="block px-4 py-2 text-sm text-gray-700">Dein Profil</a>
                     </MenuItem>
                     <MenuItem>
                       <a href="#" className="block px-4 py-2 text-sm text-gray-700">Einstellungen</a>
