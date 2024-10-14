@@ -6,7 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Chart } from 'chart.js/auto';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/solid'; // Importiere die Icons
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'; // Importiere die Icons
 
 // Typen definieren
 interface Expense {

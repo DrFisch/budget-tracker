@@ -2,7 +2,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import Navbar from './components/navigation/navbar';
+import Navbar from './components/navigation/navbar2';
 import Footer from './components/footer'; // Pfad zur Footer-Komponente
 import { checkRecurringExpenses } from './hooks/useRecurringExpenses';
 
