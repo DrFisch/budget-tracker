@@ -11,6 +11,11 @@ interface Expense {
   name: string;
   note?: string;
   date: string;
+  category: string;
+  isRecurring?: boolean;
+  frequency?: string;
+  dueDay?: number;
+  alreadyChargedThisMonth?: boolean;
 }
 
 interface UserSettings {
@@ -34,13 +39,13 @@ export default function ManageExpensesPage() {
     dueDay: '',
     alreadyChargedThisMonth: false,
   });
-  const [error, setError] = useState<string | null>(null); // Fehlermeldung
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (user && newExpense.amount && newExpense.name) {
+    if (user && newExpense.amount && newExpense.name && newExpense.category) {
       const expenseAmount = parseFloat(newExpense.amount);
 
       const docRef = doc(db, 'users', user.uid);
@@ -52,15 +57,25 @@ export default function ManageExpensesPage() {
         // Aktuelles remainingBudget berechnen
         const updatedRemainingBudget = userData.remainingBudget - expenseAmount;
 
+        // Erstelle das Ausgabe-Objekt, wobei zusätzliche Felder nur für wiederkehrende Ausgaben gesetzt werden
+        const expense: Expense = {
+          amount: expenseAmount,
+          name: newExpense.name,
+          note: newExpense.note || '',
+          date: new Date().toISOString(),
+          category: newExpense.category,
+          isRecurring: newExpense.isRecurring,
+          ...(newExpense.isRecurring && {
+            frequency: newExpense.frequency,
+            dueDay: parseInt(newExpense.dueDay),
+            alreadyChargedThisMonth: newExpense.alreadyChargedThisMonth,
+          }),
+        };
+
         // Update remainingBudget und expenses in der Datenbank
         await updateDoc(docRef, {
           remainingBudget: updatedRemainingBudget,
-          expenses: arrayUnion({
-            amount: expenseAmount,
-            name: newExpense.name,
-            note: newExpense.note || '',
-            date: new Date().toISOString(),
-          }),
+          expenses: arrayUnion(expense),
         });
 
         // Optional: Reset des Formulars
